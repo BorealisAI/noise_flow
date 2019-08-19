@@ -61,7 +61,7 @@ _To be added._
 
 If you use Noise Flow in your research, we kindly ask that you cite the paper as follows:
 
-    @article{abdelhamed2019noiseflow,
+    @inproceedings{abdelhamed2019noiseflow,
       title={{Noise Flow: Noise Modeling with Conditional Normalizing Flows}},
       author={Abdelhamed, Abdelrahman and Brubaker, Marcus A and Brown, Michael S},
       booktitle={International Conference on Computer Vision (ICCV)},
