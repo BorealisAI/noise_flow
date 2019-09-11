@@ -6,9 +6,6 @@
 #
 
 import tensorflow as tf
-import numpy as np
-
-from sidd.utils.get_learnt_params import get_learnt_params
 
 
 def sdn_iso_model_params_3(iso):
