@@ -49,7 +49,8 @@ Start by running `sample_noise_flow.py`
 
 # Application to image denoising with DnCNN
 
-_To be added._
+Start by running `job_dncnn.sh` which contains examples for training DnCNN with synthetic noise from a Gaussian, signal-dependent, or Noise Flow model. 
+Also, it contains an example for training with real noise from the SIDD.
 
 # Paper
 
