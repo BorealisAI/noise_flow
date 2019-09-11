@@ -209,7 +209,7 @@ def load_data_threads_with_noisy(data_dir, verbose=False):
     # data_dir='/shared-data/SIDD_Medium_Raw/Data/'
     file_list = glob.glob(os.path.join(data_dir, '**', '*GT_RAW_010.MAT'))  # get name list of all GT .mat files
     # get name list of all noisy .mat files
-    file_list_noisy = glob.glob(os.path.join(data_dir, '*', '*NOISY_RAW_010.MAT'))
+    file_list_noisy = glob.glob(os.path.join(data_dir, '**', '*NOISY_RAW_010.MAT'))
     for i in range(len(file_list)):
         assert file_list[i][-19:-15] == file_list_noisy[i][-22:-18]  # same scene ID
     print('# images pre-filter = %d' % len(file_list))
