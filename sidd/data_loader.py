@@ -4,19 +4,21 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 #
-
+import ftplib
 import glob
-import logging
 import os
 import queue
 import time
+import urllib
+import zipfile
 from threading import Thread
-
-# import cv2
+from urllib.request import urlopen
 import h5py
 import numpy as np
 import pandas as pd
-
+import requests
+import progressbar
+from progressbar import ProgressBar
 
 patch_size, stride = 32, 64  # patch size  = [32, 32, 4]
 aug_times = 1
@@ -275,3 +277,34 @@ def load_data_threads_with_noisy(data_dir, verbose=False):
     tt = time.time() - tt
     print('data loading finished, time = %s sec' % str(tt))
     return data1, cam_iso_info, data1_noisy
+
+
+def download_ftp(remote_path, file, ftp_ip, ftp_user, ftp_pass):
+    zipfile = open(file, 'wb')
+    ftp = ftplib.FTP(ftp_ip)
+    ftp.login(ftp_user, ftp_pass)
+    size = ftp.size(remote_path)
+    global pbar
+    pbar = 0
+
+    def file_write(data):
+        zipfile.write(data)
+        global pbar
+        pbar += len(data)
+        zipfile.flush()
+        print("\r%3.2f %%" % (pbar * 100.0 / size), end='')
+
+    ftp.retrbinary("RETR " + remote_path, file_write)
+    zipfile.close()
+    print('')
+
+
+def extract_zip_progress(zip_path, ext_dir):
+    zf = zipfile.ZipFile(zip_path)
+    uncompress_size = sum((file.file_size for file in zf.infolist()))
+    extracted_size = 0
+    for file in zf.infolist():
+        extracted_size += file.file_size
+        print("\r%3.2f %%" % (extracted_size * 100.0 / uncompress_size), end='')
+        zf.extract(file, ext_dir)
+    print('')
