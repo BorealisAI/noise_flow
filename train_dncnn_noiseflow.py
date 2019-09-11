@@ -231,8 +231,6 @@ def train_datagen(epoch_iter=2000, epoch_num=5, batch_size=128, data_dir=args.tr
                             sig = np.sqrt(b1 * batch_x + b2)  # in [0, 1]
                         except Exception as ex:
                             print(str(ex))
-                            import pdb;
-                            pdb.set_trace()
                         noise = np.random.normal(0.0, sig, batch_x.shape)
                     else:
                         raise Exception('Invalid model name')
@@ -295,7 +293,7 @@ if __name__ == '__main__':
             lr_scheduler = LearningRateScheduler(lr_schedule)
 
             print('start loading data and training...')
-            stps = 103808 / 128  # dataset size / mini-batch size = 811
+            stps = 103808 / args.batch_size  # dataset size / mini-batch size
             history = model1.fit_generator(
                 train_datagen(batch_size=args.batch_size * args.num_gpus, noise_flow=nf_model),
                 epochs=args.max_epoch, verbose=2, initial_epoch=initial_epoch, steps_per_epoch=stps,
