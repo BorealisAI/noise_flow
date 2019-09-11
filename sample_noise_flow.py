@@ -1,4 +1,8 @@
 import logging
+import os
+import zipfile
+from os.path import exists
+
 from borealisflows.NoiseFlowWrapper import NoiseFlowWrapper
 from mylogger import add_logging_level
 import sidd.data_loader as loader
@@ -6,12 +10,35 @@ import pandas as pd
 import numpy as np
 import random
 
+from sidd.data_loader import extract_zip_progress, download_ftp
+
+# change these parameters when needed
+sidd_medium_raw_url = 'ftp://sidd_user:sidd_2018@130.63.97.225/SIDD_Medium_Raw.zip'
+sidd_medium_raw_name = 'SIDD_Medium_Raw.zip'
+ftp_ip, ftp_user, ftp_pass = '130.63.97.225', 'sidd_user', 'sidd_2018'
+nf_model_path = 'models/NoiseFlow'
+data_dir = 'data'
+sidd_path = os.path.join(data_dir, 'SIDD_Medium_Raw/Data')
+
+
+def check_download_sidd():
+    if not exists(sidd_path):
+        print(sidd_path + ' does not exist')
+        zip_path = os.path.join(data_dir, sidd_medium_raw_name)
+        if not exists(zip_path):
+            print('Downloading ' + sidd_medium_raw_name + ' from ' + sidd_medium_raw_url +
+                  ' (~20 GB, this may take a while)')
+            print('To ' + zip_path)
+            download_ftp(sidd_medium_raw_name, zip_path, ftp_ip, ftp_user, ftp_pass)
+        print('Extracting ' + sidd_medium_raw_name + '... (this may take a while)')
+        print('To ' + data_dir)
+        extract_zip_progress(zip_path, data_dir)
+
 
 def main():
 
-    # TODO: change these parameters if needed
-    nf_model_path = 'models/NoiseFlow'
-    sidd_path = '/shared-data/SIDD_Medium_Raw/Data'
+    # Download SIDD_Medium_Raw?
+    check_download_sidd()
 
     # set up a custom logger
     add_logging_level('TRACE', 100)
@@ -21,7 +48,7 @@ def main():
     # Prepare NoiseFlow
     noise_flow = NoiseFlowWrapper(nf_model_path)
 
-    # load data
+    # load data  (load your own images here)
     clean_images, cam_iso_info = loader.load_data_threads(sidd_path, max_images=1)
 
     # camera IDs and ISO levels related to the SIDD dataset
