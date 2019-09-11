@@ -154,8 +154,9 @@ def load_cam_iso_nlf():
     return cin
 
 
-def load_data_threads(data_dir='/shared-data/SIDD_Medium_Raw/Data/', max_images=0, verbose=False):
-    file_list = glob.glob(os.path.join(data_dir, '*/*GT_RAW_010.MAT'))  # get name list of GT .mat files
+def load_data_threads(data_dir, max_images=0, verbose=False):
+    # data_dir='/shared-data/SIDD_Medium_Raw/Data/'
+    file_list = glob.glob(os.path.join(data_dir, '**', '*GT_RAW_010.MAT'))  # get name list of GT .mat files
     if max_images != 0:
         file_list = file_list[:max_images]
     print('# images pre-filter = %d' % len(file_list))
@@ -200,13 +201,15 @@ def load_data_threads(data_dir='/shared-data/SIDD_Medium_Raw/Data/', max_images=
     cam_iso_info = cam_iso_info[discard_n:]
     assert len(cam_iso_info) == len(data1)
     tt = time.time() - tt
-    logging.trace('loading data finished, time = %s sec' % str(tt))
+    print('loading data finished, time = %s sec' % str(tt))
     return data1, cam_iso_info
 
 
-def load_data_threads_with_noisy(data_dir='/shared-data/SIDD_Medium_Raw/Data/', verbose=False):
-    file_list = glob.glob(os.path.join(data_dir, '*/*GT_RAW_010.MAT'))  # get name list of all GT .mat files
-    file_list_noisy = glob.glob(os.path.join(data_dir, '*/*NOISY_RAW_010.MAT'))  # get name list of all noisy .mat files
+def load_data_threads_with_noisy(data_dir, verbose=False):
+    # data_dir='/shared-data/SIDD_Medium_Raw/Data/'
+    file_list = glob.glob(os.path.join(data_dir, '**', '*GT_RAW_010.MAT'))  # get name list of all GT .mat files
+    # get name list of all noisy .mat files
+    file_list_noisy = glob.glob(os.path.join(data_dir, '*', '*NOISY_RAW_010.MAT'))
     for i in range(len(file_list)):
         assert file_list[i][-19:-15] == file_list_noisy[i][-22:-18]  # same scene ID
     print('# images pre-filter = %d' % len(file_list))
