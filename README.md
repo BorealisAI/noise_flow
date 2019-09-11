@@ -24,7 +24,7 @@ _Despite not tested, the code may work with library versions other than the spec
 
 It is recommended to use the medium-size SIDD for training Noise Flow:
 
-[SIDD_Medium_Raw](ftp://sidd_user:sidd_2018@130.63.97.225/SIDD_Medium_Raw.zip)
+[SIDD_Medium_Raw](http://bit.ly/2kHT7Yr)
 
 The code checks for and downloads `SIDD_Medium_Raw` if it does not exist. 
 
