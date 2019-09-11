@@ -22,6 +22,12 @@ _Despite not tested, the code may work with library versions other than the spec
 
 [Smartphone Image Denoising Dataset (SIDD)](https://www.eecs.yorku.ca/~kamel/sidd/)
 
+It is recommended to use the medium-size SIDD for training Noise Flow:
+
+[SIDD_Medium_Raw](ftp://sidd_user:sidd_2018@130.63.97.225/SIDD_Medium_Raw.zip)
+
+The code checks for and downloads `SIDD_Medium_Raw` if it does not exist. 
+
 # Training/Testing/Sampling
 
 Start by running `job_noise_flow.sh`
