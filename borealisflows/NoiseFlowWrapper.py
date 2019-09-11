@@ -39,7 +39,7 @@ class NoiseFlowWrapper:
         self.temp = 1.0
 
         self.hps = self.hps_loader(os.path.join(self.nf_path, 'hps.txt'))
-        self.ckpt_dir = os.path.join(self.hps.logdir, 'ckpt')
+        self.ckpt_dir = os.path.join(self.nf_path, 'ckpt')
         self.model_checkpoint_path = os.path.join(self.ckpt_dir, 'model.ckpt.best')
         self.load_noise_flow_model()
 
