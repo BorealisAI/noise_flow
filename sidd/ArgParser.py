@@ -13,7 +13,7 @@ def arg_parser():
     parser.add_argument("--logdir", type=str,
                         default='./logdir/', help="Location to save logs")
     parser.add_argument("--sidd_path", type=str,
-                        default='./SIDD_Medium_Raw_Dir/', help="Location of the SIDD dataset")
+                        default='./data/SIDD_Medium_Raw/Data', help="Location of the SIDD dataset")
     parser.add_argument("--problem", type=str, default='sidd',
                         help="mnist | cifar10 | celeba | sidd")
     parser.add_argument("--dal", type=int, default=0,

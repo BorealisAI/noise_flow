@@ -4,24 +4,45 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 #
-
+import ftplib
 import glob
-import logging
 import os
 import queue
 import time
+import zipfile
+from os.path import exists
 from threading import Thread
 
-# import cv2
 import h5py
 import numpy as np
 import pandas as pd
-
 
 patch_size, stride = 32, 64  # patch size  = [32, 32, 4]
 aug_times = 1
 scales = [1]  # [1, 0.9, 0.8, 0.7]
 batch_size = 128
+
+
+# change these parameters when needed
+sidd_medium_raw_url = 'ftp://sidd_user:sidd_2018@130.63.97.225/SIDD_Medium_Raw.zip'
+sidd_medium_raw_name = 'SIDD_Medium_Raw.zip'
+ftp_ip, ftp_user, ftp_pass = '130.63.97.225', 'sidd_user', 'sidd_2018'
+data_dir = './data'
+sidd_path = os.path.join(data_dir, 'SIDD_Medium_Raw/Data')
+
+
+def check_download_sidd():
+    if not exists(sidd_path):
+        print(sidd_path + ' does not exist')
+        zip_path = os.path.join(data_dir, sidd_medium_raw_name)
+        if not exists(zip_path):
+            print('Downloading ' + sidd_medium_raw_name + ' from ' + sidd_medium_raw_url +
+                  ' (~20 GB, this may take a while)')
+            print('To ' + zip_path)
+            download_ftp(sidd_medium_raw_name, zip_path, ftp_ip, ftp_user, ftp_pass)
+        print('Extracting ' + sidd_medium_raw_name + '... (this may take a while)')
+        print('To ' + data_dir)
+        extract_zip_progress(zip_path, data_dir)
 
 
 def data_aug(img, mode=0):
@@ -154,8 +175,9 @@ def load_cam_iso_nlf():
     return cin
 
 
-def load_data_threads(data_dir='/shared-data/SIDD_Medium_Raw/Data/', max_images=0, verbose=False):
-    file_list = glob.glob(os.path.join(data_dir, '*/*GT_RAW_010.MAT'))  # get name list of GT .mat files
+def load_data_threads(data_dir, max_images=0, verbose=False):
+    # data_dir='/shared-data/SIDD_Medium_Raw/Data/'
+    file_list = glob.glob(os.path.join(data_dir, '**', '*GT_RAW_010.MAT'))  # get name list of GT .mat files
     if max_images != 0:
         file_list = file_list[:max_images]
     print('# images pre-filter = %d' % len(file_list))
@@ -200,13 +222,15 @@ def load_data_threads(data_dir='/shared-data/SIDD_Medium_Raw/Data/', max_images=
     cam_iso_info = cam_iso_info[discard_n:]
     assert len(cam_iso_info) == len(data1)
     tt = time.time() - tt
-    logging.trace('loading data finished, time = %s sec' % str(tt))
+    print('loading data finished, time = %s sec' % str(tt))
     return data1, cam_iso_info
 
 
-def load_data_threads_with_noisy(data_dir='/shared-data/SIDD_Medium_Raw/Data/', verbose=False):
-    file_list = glob.glob(os.path.join(data_dir, '*/*GT_RAW_010.MAT'))  # get name list of all GT .mat files
-    file_list_noisy = glob.glob(os.path.join(data_dir, '*/*NOISY_RAW_010.MAT'))  # get name list of all noisy .mat files
+def load_data_threads_with_noisy(data_dir, verbose=False):
+    # data_dir='/shared-data/SIDD_Medium_Raw/Data/'
+    file_list = glob.glob(os.path.join(data_dir, '**', '*GT_RAW_010.MAT'))  # get name list of all GT .mat files
+    # get name list of all noisy .mat files
+    file_list_noisy = glob.glob(os.path.join(data_dir, '**', '*NOISY_RAW_010.MAT'))
     for i in range(len(file_list)):
         assert file_list[i][-19:-15] == file_list_noisy[i][-22:-18]  # same scene ID
     print('# images pre-filter = %d' % len(file_list))
@@ -272,3 +296,34 @@ def load_data_threads_with_noisy(data_dir='/shared-data/SIDD_Medium_Raw/Data/', 
     tt = time.time() - tt
     print('data loading finished, time = %s sec' % str(tt))
     return data1, cam_iso_info, data1_noisy
+
+
+def download_ftp(remote_path, file, ftp_ip, ftp_user, ftp_pass):
+    zipfile = open(file, 'wb')
+    ftp = ftplib.FTP(ftp_ip)
+    ftp.login(ftp_user, ftp_pass)
+    size = ftp.size(remote_path)
+    global pbar
+    pbar = 0
+
+    def file_write(data):
+        zipfile.write(data)
+        global pbar
+        pbar += len(data)
+        zipfile.flush()
+        print("\r%3.2f %%" % (pbar * 100.0 / size), end='')
+
+    ftp.retrbinary("RETR " + remote_path, file_write)
+    zipfile.close()
+    print('')
+
+
+def extract_zip_progress(zip_path, ext_dir):
+    zf = zipfile.ZipFile(zip_path)
+    uncompress_size = sum((file.file_size for file in zf.infolist()))
+    extracted_size = 0
+    for file in zf.infolist():
+        extracted_size += file.file_size
+        print("\r%3.2f %%" % (extracted_size * 100.0 / uncompress_size), end='')
+        zf.extract(file, ext_dir)
+    print('')

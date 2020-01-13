@@ -254,6 +254,8 @@ def load_one_tuple_images(filepath_tuple):
 
     fparts = in_path.split('/')
     sdir = fparts[-3]
+    if len(sdir) != 30:
+        sdir = fparts[-2]  # if subdirectory does not exist
     iso = float(sdir[12:17])
     # max_iso = 3200.0
     # iso = iso / max_iso  # - 0.5  # TODO: is this okay?
@@ -903,14 +905,24 @@ def sidd_filenames_que_inst(sidd_path, train_or_test='train', first_im_idx=0, la
             continue
         n_files = len(glob.glob(path.join(sidd_path, subdir, id_str + '_GT_RAW', '*.MAT')))
         for i in range(first_im_idx, last_im_idx):
-            a_tuple = tuple(
-                (
-                    path.join(sidd_path, subdir, id_str + '_NOISY_RAW', id_str + '_NOISY_RAW_%03d.MAT' % i),
-                    path.join(sidd_path, subdir, id_str + '_GT_RAW', id_str + '_GT_RAW_%03d.MAT' % i),
-                    path.join(sidd_path, subdir, id_str + '_VARIANCE_RAW', id_str + '_VARIANCE_RAW_%03d.MAT' % i),
-                    path.join(sidd_path, subdir, id_str + '_METADATA_RAW', id_str + '_METADATA_RAW_%03d.MAT' % i)
+            if 'SIDD_Medium' in sidd_path:
+                a_tuple = tuple(
+                    (
+                        path.join(sidd_path, subdir, id_str + '_NOISY_RAW_%03d.MAT' % i),
+                        path.join(sidd_path, subdir, id_str + '_GT_RAW_%03d.MAT' % i),
+                        path.join(sidd_path, subdir, id_str + '_VARIANCE_RAW_%03d.MAT' % i),
+                        path.join(sidd_path, subdir, id_str + '_METADATA_RAW_%03d.MAT' % i)
+                    )
                 )
-            )
+            else:
+                a_tuple = tuple(
+                    (
+                        path.join(sidd_path, subdir, id_str + '_NOISY_RAW', id_str + '_NOISY_RAW_%03d.MAT' % i),
+                        path.join(sidd_path, subdir, id_str + '_GT_RAW', id_str + '_GT_RAW_%03d.MAT' % i),
+                        path.join(sidd_path, subdir, id_str + '_VARIANCE_RAW', id_str + '_VARIANCE_RAW_%03d.MAT' % i),
+                        path.join(sidd_path, subdir, id_str + '_METADATA_RAW', id_str + '_METADATA_RAW_%03d.MAT' % i)
+                    )
+                )
             fns.put(a_tuple)
         idxs.append(id)
         cnt_inst += 1

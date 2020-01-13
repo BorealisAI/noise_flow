@@ -8,16 +8,14 @@
 import logging
 import os
 import queue
-import random
+import sys
 import time
 from threading import Thread
-import h5py
-import numpy as np
-import sys
-from numpy import save, load, savetxt
-from scipy.io import loadmat
 
-from sidd.sidd_utils import pack_raw, get_nlf, load_one_tuple_images, sample_indices_uniform, bpd
+import numpy as np
+from numpy import save, load
+
+from sidd.sidd_utils import bpd
 
 
 class PatchStatsCalculator:
@@ -414,7 +412,8 @@ class PatchStatsCalculator:
         return divs
 
     def load_pat_stats(self):
-        self.stats = np.load(os.path.join(self.save_dir, 'pat_stats%s.npy') % self.file_postfix).item()  # dictionary
+        self.stats = np.load(os.path.join(self.save_dir, 'pat_stats%s.npy') % self.file_postfix,
+                             allow_pickle=True).item()  # dictionary
         return self.stats
 
     def load_gauss_baseline(self):

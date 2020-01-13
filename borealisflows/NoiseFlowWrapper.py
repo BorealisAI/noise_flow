@@ -39,7 +39,7 @@ class NoiseFlowWrapper:
         self.temp = 1.0
 
         self.hps = self.hps_loader(os.path.join(self.nf_path, 'hps.txt'))
-        self.ckpt_dir = os.path.join(self.hps.logdir, 'ckpt')
+        self.ckpt_dir = os.path.join(self.nf_path, 'ckpt')
         self.model_checkpoint_path = os.path.join(self.ckpt_dir, 'model.ckpt.best')
         self.load_noise_flow_model()
 
@@ -83,7 +83,7 @@ class NoiseFlowWrapper:
         # sig = np.sqrt(b1 * batch_x + b2)  # in [0, 1]
         # noise = np.random.normal(0.0, sig, batch_x.shape)
         noise = self.sess.run(self.x_sample, feed_dict={self.y: batch_x, self.nlf0: [b1], self.nlf1: [b2],
-                                                        self.iso: [iso], self.cam: [cam], self.is_training: False})
+                                                        self.iso: [iso], self.cam: [cam], self.is_training: True})
         return noise
 
     def sample_sidd_tf(self):

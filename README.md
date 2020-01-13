@@ -4,7 +4,7 @@ Noise Flow - A normalizing flows model for image noise modeling and synthesis
 This repository provides the codes for training and testing the Noise Flow model used for image noise modeling and 
 synthesis as described in the paper:
 
-**Noise Flow: Noise Modeling with Conditional Normalizing Flows**
+[**Noise Flow: Noise Modeling with Conditional Normalizing Flows**](https://arxiv.org/pdf/1908.08453.pdf)
 
 It also provides code for training and testing a CNN-based image denoiser (DnCNN) using Noise Flow as a noise generator, with comparison to other noise generation methods (i.e., AWGN and signal-dependent noise).
   
@@ -21,6 +21,12 @@ _Despite not tested, the code may work with library versions other than the spec
 # Required dataset
 
 [Smartphone Image Denoising Dataset (SIDD)](https://www.eecs.yorku.ca/~kamel/sidd/)
+
+It is recommended to use the medium-size SIDD for training Noise Flow:
+
+[SIDD_Medium_Raw](http://bit.ly/2kHT7Yr)
+
+The code checks for and downloads `SIDD_Medium_Raw` if it does not exist. 
 
 # Training/Testing/Sampling
 
@@ -49,19 +55,20 @@ Start by running `sample_noise_flow.py`
 
 # Application to image denoising with DnCNN
 
-_To be added._
+Start by running `job_dncnn.sh` which contains examples for training DnCNN with synthetic noise from a Gaussian, signal-dependent, or Noise Flow model. 
+Also, it contains an example for training with real noise from the SIDD.
 
 # Paper
 
 [Abdelrahman Abdelhamed](https://www.eecs.yorku.ca/~kamel/), [Marcus A. Brubaker](https://www.eecs.yorku.ca/~mab/), and [Michael S. Brown](https://www.eecs.yorku.ca/~mbrown/). Noise Flow: Noise Modeling with Conditional Normalizing Flows. In _ICCV_, 2019.
 
-_PDF coming soon._
+[PDF](https://arxiv.org/pdf/1908.08453.pdf)
 
 # Citation
 
 If you use Noise Flow in your research, we kindly ask that you cite the paper as follows:
 
-    @article{abdelhamed2019noiseflow,
+    @inproceedings{abdelhamed2019noiseflow,
       title={{Noise Flow: Noise Modeling with Conditional Normalizing Flows}},
       author={Abdelhamed, Abdelrahman and Brubaker, Marcus A and Brown, Michael S},
       booktitle={International Conference on Computer Vision (ICCV)},
