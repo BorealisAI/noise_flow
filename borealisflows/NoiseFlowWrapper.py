@@ -83,7 +83,7 @@ class NoiseFlowWrapper:
         # sig = np.sqrt(b1 * batch_x + b2)  # in [0, 1]
         # noise = np.random.normal(0.0, sig, batch_x.shape)
         noise = self.sess.run(self.x_sample, feed_dict={self.y: batch_x, self.nlf0: [b1], self.nlf1: [b2],
-                                                        self.iso: [iso], self.cam: [cam], self.is_training: False})
+                                                        self.iso: [iso], self.cam: [cam], self.is_training: True})
         return noise
 
     def sample_sidd_tf(self):
