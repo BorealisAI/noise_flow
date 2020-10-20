@@ -14,7 +14,7 @@ import numpy as np
 from sidd.data_loader import check_download_sidd
 from sidd.pipeline import process_sidd_image
 from sidd.raw_utils import read_metadata
-from sidd.sidd_utils import unpack_raw
+from sidd.sidd_utils import unpack_raw, kl_div_3_data
 
 data_dir = 'data'
 sidd_path = os.path.join(data_dir, 'SIDD_Medium_Raw/Data')
@@ -25,7 +25,6 @@ os.makedirs(samples_dir, exist_ok=True)
 
 
 def main():
-
     # Download SIDD_Medium_Raw?
     check_download_sidd()
 
@@ -35,11 +34,15 @@ def main():
     logging.basicConfig(level=logging.TRACE)
 
     # Prepare NoiseFlow
-    noise_flow = NoiseFlowWrapper(nf_model_path)
+    # Issue: Low-probability sampling leading to synthesized pixels with too-high noise variance.
+    # Solution: Contracting the sampling distribution by using sampling temperature less than 1.0 (e.g., 0.6).
+    # Reference: Parmar, Niki, et al. "Image Transformer." ICML. 2018.
+    noise_flow = NoiseFlowWrapper(nf_model_path, sampling_temperature=0.6)
 
     # sample noise and add it to clean images
     patch_size = 32
     batch_size = 1  # using batches is faster
+    kldiv_list = []
     for sc_id in [10, 52, 64]:  # scene IDs
 
         # load images
@@ -51,6 +54,7 @@ def main():
         if iso not in [100, 400, 800, 1600, 3200]:
             continue
 
+        np.random.seed(12345)  # for reproducibility
         n_pat = 10
         for p in range(n_pat):
 
@@ -80,8 +84,8 @@ def main():
             conc_height, conc_width, _ = conc_im.shape
 
             # save as .png
-            scale = 16
-            cv2.resize(conc_im, (conc_width * scale, conc_height * scale), interpolation=cv2.INTER_NEAREST)
+            scale = 8
+            conc_im = cv2.resize(conc_im, (conc_width * scale, conc_height * scale), interpolation=cv2.INTER_NEAREST)
             save_fn = os.path.join(samples_dir, '%02d_%02d_%04d.png' % (sc_id, p, iso))
             cv2.imwrite(save_fn, conc_im)
 
@@ -89,6 +93,12 @@ def main():
             save_mat_fn = os.path.join(samples_dir, '%02d_%02d_%04d.mat' % (sc_id, p, iso))
             savemat(save_mat_fn, {'clean': clean_patch, 'noisy': noisy_patch, 'noisy_syn': noisy_patch_syn,
                                   'metadata': metadata})
+
+            # compute KL divergence
+            kldiv_fwd, _, _ = kl_div_3_data(noisy_patch.flatten() - clean_patch.flatten(), noise_patch_syn.flatten())
+            kldiv_list.append(kldiv_fwd)
+
+    print("Mean KL divergence = {}".format(np.mean(np.array(kldiv_list), axis=0)))
 
 
 def load_cam_iso_nlf():
@@ -100,5 +110,3 @@ def load_cam_iso_nlf():
 
 if __name__ == '__main__':
     main()
-
-
