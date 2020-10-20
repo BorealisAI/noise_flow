@@ -17,7 +17,7 @@ import numpy as np
 
 
 class NoiseFlowWrapper:
-    def __init__(self, path):
+    def __init__(self, path, sampling_temperature=0.6):
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger(__name__)
         self.nf_path = path
@@ -36,7 +36,7 @@ class NoiseFlowWrapper:
         self.x_sample = None
 
         self.is_cond = True
-        self.temp = 1.0
+        self.temp = sampling_temperature
 
         self.hps = self.hps_loader(os.path.join(self.nf_path, 'hps.txt'))
         self.ckpt_dir = os.path.join(self.nf_path, 'ckpt')
