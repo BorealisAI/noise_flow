@@ -264,7 +264,7 @@ def main(hps):
     # calculate data stats and baselines
     logging.trace('calculating data stats and baselines...')
     hps.calc_pat_stats_and_baselines_only = True
-    pat_stats, nll_gauss, _, nll_sdn, _ = initialize_data_stats_queues_baselines_histograms(hps, logdir)
+    pat_stats, nll_gauss, _, nll_sdn, _, tr_batch_sampler, ts_batch_sampler = initialize_data_stats_queues_baselines_histograms(hps, logdir)
     hps.nll_gauss = nll_gauss
     hps.nll_sdn = nll_sdn
 
@@ -273,7 +273,7 @@ def main(hps):
     logging.trace('preparing data queues...')
     hps.calc_pat_stats_and_baselines_only = False
     tr_im_que, ts_im_que, tr_pat_que, ts_pat_que, tr_batch_que, ts_batch_que = \
-        initialize_data_stats_queues_baselines_histograms(hps, logdir)
+        initialize_data_stats_queues_baselines_histograms(hps, logdir, tr_batch_sampler=tr_batch_sampler, ts_batch_sampler=ts_batch_sampler)
     # hps.save_batches = True
 
     print_train_test_stats(hps)
@@ -544,6 +544,5 @@ if __name__ == "__main__":
 
     # This enables a ctr-C without triggering errors
     signal.signal(signal.SIGINT, lambda x, y: sys.exit(0))
-
     hps = arg_parser()
     main(hps)
