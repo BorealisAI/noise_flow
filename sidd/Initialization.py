@@ -15,6 +15,7 @@ from sidd.sidd_utils import sidd_filenames_que_inst
 
 
 def initialize_data_stats_queues_baselines_histograms(hps, logdir, tr_batch_sampler=None, ts_batch_sampler=None):
+
     # use 4 or 8 thread for faster loading
     n_thr_im = 8
     n_thr_pt = 1  # use 1 to prevent shuffling
@@ -56,7 +57,7 @@ def initialize_data_stats_queues_baselines_histograms(hps, logdir, tr_batch_samp
         nll_gauss, bpd_gauss = pat_stats_calculator.load_gauss_baseline()
         nll_sdn, bpd_sdn = pat_stats_calculator.load_sdn_baseline()
 
-    if tr_batch_sampler is None:
+    if ts_batch_sampler is None:
         tr_batch_sampler = MiniBatchSampler(tr_pat_que, minibatch_size=hps.n_batch_train, max_queue_size=mb_qsz_tr,
                                             n_threads=n_thr_mb, pat_stats=pat_stats)
         ts_batch_sampler = MiniBatchSampler(ts_pat_que, minibatch_size=hps.n_batch_test, max_queue_size=mb_qsz_ts,

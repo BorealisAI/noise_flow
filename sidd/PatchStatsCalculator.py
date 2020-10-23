@@ -90,7 +90,7 @@ class PatchStatsCalculator:
         return self.stats
 
     def calc_baselines(self, ts_mb_que):
-
+        import pdb; pdb.set_trace()
         # out = np.zeros((self.hps.test_its, 4))
         nll_gauss_lst = []
         nll_sdn_lst = []
@@ -113,7 +113,7 @@ class PatchStatsCalculator:
                 (np.log(2 * np.pi) + np.log(vr) + (x) ** 2 / vr)
             nll_mb = np.sum(nll_mb, axis=(1, 2, 3))
             nll_sdn_lst.append(nll_mb)
-
+        import pdb; pdb.set_trace()
         nll_sdn = np.mean(nll_sdn_lst)
         # print(str(np.mean(nll_sdn_lst)), end='******')
         # np.savetxt(os.path.join(self.save_dir, 'out.txt'), out, fmt='%f')

@@ -25,6 +25,7 @@ from shutil import copyfile
 from threading import Thread
 
 import h5py
+import cv2
 import imageio
 import numpy as np
 from os import path
@@ -220,6 +221,42 @@ def dequeue_dict(que):
         if not que.empty():
             return que.get()
 
+
+def load_one_tuple_srgb_images(filepath_tuple):
+    in_path = filepath_tuple[0]  # index 0: input noisy image path
+    gt_path = filepath_tuple[1]  # index 1: ground truth image path
+
+    # raw = loadmat(in_path)  # (use this for .mat files without -v7.3 format)
+    # with h5py.File(in_path, 'r') as f:  # (use this for .mat files with -v7.3 format)
+    #     raw = f[list(f.keys())[0]]  # use the first and only key
+    #     # input_image = np.transpose(raw)  # TODO: transpose?
+    #     input_image = np.expand_dims(pack_raw(raw), axis=0)
+    #     input_image = np.nan_to_num(input_image)
+    #     input_image = np.clip(input_image, 0.0, 1.0)
+    input_image = cv2.imread(in_path) 
+    # with h5py.File(gt_path, 'r') as f:
+    #     gt_raw = f[list(f.keys())[0]]  # use the first and only key
+    #     # gt_image = np.transpose(gt_raw)  # TODO: transpose?
+    #     gt_image = np.expand_dims(pack_raw(gt_raw), axis=0)
+    #     gt_image = np.nan_to_num(gt_image)
+    #     gt_image = np.clip(gt_image, 0.0, 1.0)
+    gt_image = cv2.imread(gt_path) 
+
+    fparts = in_path.split('/')
+    sdir = fparts[-3]
+    if len(sdir) != 30:
+        sdir = fparts[-2]  # if subdirectory does not exist
+    iso = float(sdir[12:17])
+    # max_iso = 3200.0
+    # iso = iso / max_iso  # - 0.5  # TODO: is this okay?
+    cam = float(['IP', 'GP', 'S6', 'N6', 'G4'].index(sdir[9:11]))
+
+    # use noise layer instead of noise image TODO: just to be aware of this crucial step
+    input_image = input_image - gt_image
+    input_image = input_image[np.newaxis, ...]
+    gt_image = gt_image[np.newaxis, ...]
+    print('shape ', input_image.shape, gt_image.shape)
+    return input_image, gt_image, iso, cam
 
 def load_one_tuple_images(filepath_tuple):
     in_path = filepath_tuple[0]  # index 0: input noisy image path
@@ -905,7 +942,14 @@ def sidd_filenames_que_inst(sidd_path, train_or_test='train', first_im_idx=0, la
             continue
         n_files = len(glob.glob(path.join(sidd_path, subdir, id_str + '_GT_RAW', '*.MAT')))
         for i in range(first_im_idx, last_im_idx):
-            if 'SIDD_Medium' in sidd_path:
+            if 'SIDD_Medium_Srgb' in sidd_path:
+                a_tuple = tuple(
+                    (
+                        path.join(sidd_path, subdir, id_str + '_NOISY_SRGB_%03d.PNG' % i),
+                        path.join(sidd_path, subdir, id_str + '_GT_SRGB_%03d.PNG' % i),
+                    )
+                )
+            elif 'SIDD_Medium' in sidd_path:
                 a_tuple = tuple(
                     (
                         path.join(sidd_path, subdir, id_str + '_NOISY_RAW_%03d.MAT' % i),
@@ -915,6 +959,7 @@ def sidd_filenames_que_inst(sidd_path, train_or_test='train', first_im_idx=0, la
                     )
                 )
             else:
+                import pdb; pdb.set_trace()
                 a_tuple = tuple(
                     (
                         path.join(sidd_path, subdir, id_str + '_NOISY_RAW', id_str + '_NOISY_RAW_%03d.MAT' % i),

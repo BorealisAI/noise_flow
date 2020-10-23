@@ -11,6 +11,7 @@ from threading import Thread
 
 import numpy as np
 import tensorflow as tf
+tf.get_logger().setLevel('ERROR')
 
 from borealisflows.noise_flow_model import NoiseFlow
 from borealisflows.utils import ResultLogger

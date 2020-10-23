@@ -9,7 +9,7 @@ import queue
 from threading import Thread
 from time import sleep
 
-from sidd.sidd_utils import pack_raw, get_nlf, load_one_tuple_images
+from sidd.sidd_utils import pack_raw, get_nlf, load_one_tuple_images, load_one_tuple_srgb_images
 
 
 class ImageLoader:
@@ -45,9 +45,13 @@ class ImageLoader:
             parts = str.split(filename_tuple[0], '/')
             fn = parts[-3] + '|' + parts[-1]
 
-            noise, gt, var, nlf0, nlf1, iso, cam, metadata = load_one_tuple_images(filename_tuple)
-            im_dict = {'in': noise, 'gt': gt, 'vr': var, 'nlf0': nlf0, 'nlf1': nlf1, 'iso': iso, 'cam': cam,
-                       'fn': fn, 'metadata': metadata}
+            if 'Srgb' in filename_tuple[0]:
+              noise, gt, iso, cam = load_one_tuple_srgb_images(filename_tuple)
+              im_dict = {'in': noise, 'gt': gt, 'iso': iso, 'cam': cam, 'fn': fn}
+            else:
+              noise, gt, var, nlf0, nlf1, iso, cam, metadata = load_one_tuple_images(filename_tuple)
+              im_dict = {'in': noise, 'gt': gt, 'vr': var, 'nlf0': nlf0, 'nlf1': nlf1, 'iso': iso, 'cam': cam,
+                        'fn': fn, 'metadata': metadata}
 
             # Enqueue image tuple
             self.queue.put(im_dict)
