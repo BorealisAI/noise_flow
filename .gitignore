@@ -1,0 +1,8 @@
+venv/*
+sidd/__pycache__/*
+borealisflows/noise_flow_layers/__pycache__/*
+borealisflows/__pycache__/*
+__pycache__/*
+data/*
+experiments/*
+.vscode/*

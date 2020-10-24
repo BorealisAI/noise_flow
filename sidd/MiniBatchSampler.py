@@ -58,15 +58,24 @@ class MiniBatchSampler:
                 mini_batch_y[p, :, :, :] = pat_dict['gt']
                 mini_batch_pid[p] = pat_dict['pid']  # patch index in image
             # only one value for the whole mini-batch:
-            mini_batch_nlf0 = [pat_dict['nlf0']]
-            mini_batch_nlf1 = [pat_dict['nlf1']]
             mini_batch_iso = [pat_dict['iso']]
             mini_batch_cam = [pat_dict['cam']]
 
-            self.queue.put({'_x': mini_batch_x, '_y': mini_batch_y, 'pid': mini_batch_pid,
-                            'nlf0': mini_batch_nlf0, 'nlf1': mini_batch_nlf1,
-                            'iso': mini_batch_iso, 'cam': mini_batch_cam,
-                            'fn': pat_dict['fn'], 'metadata': pat_dict['metadata']})
+            data = {'_x': mini_batch_x, '_y': mini_batch_y, 'pid': mini_batch_pid,
+                    'iso': mini_batch_iso, 'cam': mini_batch_cam,
+                    'fn': pat_dict['fn']}
+
+            if 'nlf0' in pat_dict.keys(): # sRGB vs raw
+                mini_batch_nlf0 = [pat_dict['nlf0']]
+                mini_batch_nlf1 = [pat_dict['nlf1']]
+
+                data.update({
+                    'nlf0': mini_batch_nlf0,
+                    'nlf1': mini_batch_nlf1,
+                    'metadata': pat_dict['metadata']
+                })
+
+            self.queue.put(data)
             mb_cnt += 1
             # if self.patch_tuple_queue.empty():
             #     print('patch queue empty, # sampled minibatches = %d' % mb_cnt)

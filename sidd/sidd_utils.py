@@ -255,7 +255,7 @@ def load_one_tuple_srgb_images(filepath_tuple):
     input_image = input_image - gt_image
     input_image = input_image[np.newaxis, ...]
     gt_image = gt_image[np.newaxis, ...]
-    print('shape ', input_image.shape, gt_image.shape)
+
     return input_image, gt_image, iso, cam
 
 def load_one_tuple_images(filepath_tuple):

@@ -51,7 +51,7 @@ def initialize_data_stats_queues_baselines_histograms(hps, logdir, tr_batch_samp
     if hps.calc_pat_stats_and_baselines_only:
         pat_stats = None
     else:
-        pat_stats_calculator = PatchStatsCalculator(None, hps.patch_height, n_channels=4,
+        pat_stats_calculator = PatchStatsCalculator(None, hps.patch_height, n_channels=hps.n_channels,
                                                     save_dir=logdir, file_postfix='', n_threads=n_thr_psc, hps=hps)
         pat_stats = pat_stats_calculator.load_pat_stats()
         nll_gauss, bpd_gauss = pat_stats_calculator.load_gauss_baseline()
@@ -67,7 +67,7 @@ def initialize_data_stats_queues_baselines_histograms(hps, logdir, tr_batch_samp
 
     # patch stats and baselines
     if hps.calc_pat_stats_and_baselines_only:
-        pat_stats_calculator = PatchStatsCalculator(tr_batch_que, hps.patch_height, n_channels=4,
+        pat_stats_calculator = PatchStatsCalculator(tr_batch_que, hps.patch_height, n_channels=hps.n_channels,
                                                     save_dir=logdir, file_postfix='', n_threads=n_thr_psc, hps=hps)
         pat_stats = pat_stats_calculator.calc_stats()
         nll_gauss, bpd_gauss, nll_sdn, bpd_sdn = pat_stats_calculator.calc_baselines(ts_batch_que)

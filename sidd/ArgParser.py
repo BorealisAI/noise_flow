@@ -163,5 +163,7 @@ def arg_parser():
                         help="An initial value for gain parameters")
     parser.add_argument("--pre_init", action='store_true',
                         help="Whether to initialize signal, gain, and/or camera variables from prior models.")
+    parser.add_argument("--n_channels", type=int, default=4,
+                        help="Number of image channles")
     hps = parser.parse_args()  # So error if typo
     return hps

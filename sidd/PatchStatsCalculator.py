@@ -80,7 +80,7 @@ class PatchStatsCalculator:
             self.threads.append(Thread(
                 target=self.calc_patch_stats, args=(t, self.mb_queue, divs[t], out_que, cnt_mb_que)))
             self.threads[t].start()
-        print('')
+
         for t in range(self.n_threads):
             self.threads[t].join()
         self.weighted_stats(out_que)
@@ -90,18 +90,16 @@ class PatchStatsCalculator:
         return self.stats
 
     def calc_baselines(self, ts_mb_que):
-        import pdb; pdb.set_trace()
         # out = np.zeros((self.hps.test_its, 4))
         nll_gauss_lst = []
         nll_sdn_lst = []
+        import ipdb; ipdb.set_trace()
+
         for i in range(self.hps.test_its):
             mb = ts_mb_que.get()
 
             x = mb['_x']
             y = mb['_y']
-            nlf0 = mb['nlf0']
-            nlf1 = mb['nlf1']
-            vr = y * nlf0 + nlf1
 
             vr_gauss = self.stats['sc_in_vr']
             nll_mb_gauss = 0.5 * \
@@ -109,11 +107,14 @@ class PatchStatsCalculator:
             nll_mb_gauss = np.sum(nll_mb_gauss, axis=(1, 2, 3))
             nll_gauss_lst.append(nll_mb_gauss)
 
-            nll_mb = 0.5 * \
-                (np.log(2 * np.pi) + np.log(vr) + (x) ** 2 / vr)
-            nll_mb = np.sum(nll_mb, axis=(1, 2, 3))
-            nll_sdn_lst.append(nll_mb)
-        import pdb; pdb.set_trace()
+            if 'nlf0' in mb.keys(): # sRGB vs Raw
+                nlf0 = mb['nlf0']
+                nlf1 = mb['nlf1']
+                vr = y * nlf0 + nlf1
+                nll_mb = 0.5 * \
+                    (np.log(2 * np.pi) + np.log(vr) + (x) ** 2 / vr)
+                nll_mb = np.sum(nll_mb, axis=(1, 2, 3))
+                nll_sdn_lst.append(nll_mb)
         nll_sdn = np.mean(nll_sdn_lst)
         # print(str(np.mean(nll_sdn_lst)), end='******')
         # np.savetxt(os.path.join(self.save_dir, 'out.txt'), out, fmt='%f')

@@ -52,29 +52,28 @@ class PatchSampler:
             H = im_tuple['in'].shape[1]
             W = im_tuple['in'].shape[2]
             if self.sampling == 'uniform':  # use all patches in image
-                # 2016 1512 32 32 False 2898
-                # (1, 2016, 1512, 4)
-                # 4032 3 32 32 False 2898
-                # (3024, 4032, 3)
-                print("AAAAA", H, W, self.patch_height, self.patch_height, self.shuffle, self.n_pat_per_im)
-                print(im_tuple['in'].shape)
                 ii, jj, n_p = sample_indices_uniform(H, W, self.patch_height, self.patch_height, shuf=self.shuffle,
                                                      n_pat_per_im=self.n_pat_per_im)
-                print(ii, jj, n_p)
                 if n_p != self.n_pat_per_im:
                     print('# patches/image = %d != %d' % (n_p, self.n_pat_per_im))
                     print('fn = %s' % str(im_tuple['fn']))
-                    # import pdb
-                    # pdb.set_trace()
+                    import pdb
+                    pdb.set_trace()
             else:  # use self.n_pat_per_im patches
                 ii, jj = sample_indices_random(H, W, self.patch_height, self.patch_height, self.n_pat_per_im)
             pid = 0
             for (i, j) in zip(ii, jj):
                 in_patch = im_tuple['in'][:, i:i + self.patch_height, j:j + self.patch_height, :]
                 gt_patch = im_tuple['gt'][:, i:i + self.patch_height, j:j + self.patch_height, :]
-                pat_dict = {'in': in_patch, 'gt': gt_patch, 'vr': [], 'nlf0': im_tuple['nlf0'],
-                            'nlf1': im_tuple['nlf1'], 'iso': im_tuple['iso'], 'cam': im_tuple['cam'],
-                            'fn': im_tuple['fn'], 'metadata': im_tuple['metadata'], 'pid': pid}
+                pat_dict = {'in': in_patch, 'gt': gt_patch, 'vr': [], 'iso': im_tuple['iso'], 'cam': im_tuple['cam'],
+                            'fn': im_tuple['fn'], 'pid': pid}
+                if 'nlf0' in im_tuple.keys() and 'nlf1' in im_tuple.keys() and 'metadata' in im_tuple.keys(): # sRGB vs raw
+                    pat_dict.update({
+                        'nlf0': im_tuple['nlf0'],
+                        'nlf1': im_tuple['nlf1'],
+                        'metadata': im_tuple['metadata']
+                    })
+
                 pid += 1
                 self.queue.put(pat_dict)
                 pat_cnt += 1

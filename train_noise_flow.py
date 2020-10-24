@@ -56,20 +56,24 @@ def train_thread(thr_id, niter, sess, tr_batch_que,
         tr_mb_dict = tr_batch_que.get()  # blocking
         _x = tr_mb_dict['_x']
         _y = tr_mb_dict['_y']
-        _nlf0 = tr_mb_dict['nlf0']
-        _nlf1 = tr_mb_dict['nlf1']
         _iso = tr_mb_dict['iso']
         _cam = tr_mb_dict['cam']
 
+        feed_dict = {x: _x, y: _y, iso: _iso, cam: _cam, lr: _lr, is_training: True}
+
+        if 'nlf0' in tr_mb_dict.keys():
+            _nlf0 = tr_mb_dict['nlf0']
+            _nlf1 = tr_mb_dict['nlf1']
+            feed_dict.update({
+                nlf0: _nlf0,
+                nlf1: _nlf1
+            })
         if hps.sidd_cond == 'condSDN':
             train_loss, sd_z_val = sess.run(
-                [loss, sd_z], feed_dict={x: _x, y: _y, nlf0: _nlf0, nlf1: _nlf1, iso: _iso, cam: _cam,
-                                         lr: _lr, is_training: True})
+                [loss, sd_z], feed_dict=feed_dict)
         else:
             _, train_loss, sd_z_val = sess.run(
-                [train_op, loss, sd_z], feed_dict={x: _x, y: _y, nlf0: _nlf0, nlf1: _nlf1, iso: _iso,
-                                                   cam: _cam, lr: _lr,
-                                                   is_training: True})
+                [train_op, loss, sd_z], feed_dict=feed_dict)
         if requeue:
             tr_batch_que.put(tr_mb_dict)
         sd_z_que.put(sd_z_val)
@@ -105,13 +109,20 @@ def test_thread(thr_id, niter, sess, ts_batch_que,
         ts_mb_dict = ts_batch_que.get()  # blocking
         _x = ts_mb_dict['_x']
         _y = ts_mb_dict['_y']
-        _nlf0 = ts_mb_dict['nlf0']
-        _nlf1 = ts_mb_dict['nlf1']
         _iso = ts_mb_dict['iso']
         _cam = ts_mb_dict['cam']
 
-        test_loss, sd_z_val = sess.run([loss, sd_z], feed_dict={x: _x, y: _y, nlf0: _nlf0, nlf1: _nlf1, iso: _iso,
-                                                                cam: _cam, is_training: False})
+        feed_dict = {x: _x, y: _y, iso: _iso, cam: _cam, is_training: False}
+
+        if 'nlf0' in ts_mb_dict.keys():
+            _nlf0 = ts_mb_dict['nlf0']
+            _nlf1 = ts_mb_dict['nlf1']
+            feed_dict.update({
+                nlf0: _nlf0,
+                nlf1: _nlf1
+            })
+
+        test_loss, sd_z_val = sess.run([loss, sd_z], feed_dict=feed_dict)
         if requeue:
             ts_batch_que.put(ts_mb_dict)
         test_epoch_loss_que.put(test_loss)
@@ -216,7 +227,6 @@ def init_params(hps1):
 
 
 def main(hps):
-
     # Download SIDD_Medium_Raw?
     check_download_sidd()
 
@@ -233,6 +243,7 @@ def main(hps):
     hps.n_bins = 2. ** hps.n_bits_x
 
     logging.trace('SIDD path = %s' % hps.sidd_path)
+    logging.trace('Num GPUs Available: %s' % len(tf.config.experimental.list_physical_devices('GPU')))
 
     # prepare data file names
     tr_fns, hps.n_tr_inst = sidd_filenames_que_inst(hps.sidd_path, 'train', hps.start_tr_im_idx, hps.end_tr_im_idx,
@@ -258,7 +269,7 @@ def main(hps):
     hps.train_its = train_its
     hps.test_its = test_its
 
-    x_shape = [None, hps.patch_height, hps.patch_height, 4]
+    x_shape = [None, hps.patch_height, hps.patch_height, hps.n_channels]
     hps.x_shape = x_shape
     hps.n_dims = np.prod(x_shape[1:])
 
@@ -312,7 +323,6 @@ def main(hps):
 
     # create session
     sess = tf.Session()
-
     n_processed = 0
     train_time = 0.0
     test_loss_best = np.inf
@@ -427,7 +437,7 @@ def main(hps):
         # End testing if & loop
 
         # Sampling (optional)
-        do_sampling = True  # make this true to perform sampling
+        do_sampling = False  # make this true to perform sampling
         if do_sampling and ((epoch < 10 or (epoch < 100 and epoch % 10 == 0) or  # (is_best == 1) or
                              epoch % hps.epochs_full_valid * 2 == 0.)):
             for temp in [1.0]:  # using only default temperature
@@ -546,4 +556,5 @@ if __name__ == "__main__":
     # This enables a ctr-C without triggering errors
     signal.signal(signal.SIGINT, lambda x, y: sys.exit(0))
     hps = arg_parser()
+
     main(hps)

@@ -38,6 +38,14 @@ python3 train_noise_flow.py --logdir noise_flow_model   --arch "sdn5|unc|unc|unc
      --n_patches_per_image 2898 --patch_height 32 --patch_sampling uniform \
      --start_tr_im_idx 10   --end_tr_im_idx 12   --start_ts_im_idx 10   --end_ts_im_idx 12
 
+# Example: training the Noise Flow sRGB model (S-Ax4-G-Ax4-CAM), number of parameters 2433
+
+python3 train_noise_flow.py --logdir noise_flow_model   --arch "sdn5|unc|unc|unc|unc|gain4|unc|unc|unc|unc" \
+     --sidd_path './data/SIDD_Medium_Srgb/Data' --cam IP --iso 800  --n_train_threads 16   \
+     --width 4 --epochs 2000  --lr 1e-4 --n_batch_train 138 --n_batch_test 138 --epochs_full_valid 10 \
+     --n_patches_per_image 2898 --patch_height 32 --patch_sampling uniform \
+     --start_tr_im_idx 10   --end_tr_im_idx 12   --start_ts_im_idx 10   --end_ts_im_idx 12 --n_channels 3
+
 
 # Example: training a noise flow model with only affine coupling blocks of size 1 (S-Ax1-G-Ax1-CAM)
 
