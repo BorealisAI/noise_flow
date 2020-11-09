@@ -93,7 +93,6 @@ class PatchStatsCalculator:
         # out = np.zeros((self.hps.test_its, 4))
         nll_gauss_lst = []
         nll_sdn_lst = []
-        import ipdb; ipdb.set_trace()
 
         for i in range(self.hps.test_its):
             mb = ts_mb_que.get()

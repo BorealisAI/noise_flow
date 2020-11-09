@@ -294,22 +294,24 @@ def main(hps):
 
     # Build noise flow graph
     logging.trace('Building NoiseFlow...')
-    is_training = tf.placeholder(tf.bool, name='is_training')
-    x = tf.placeholder(tf.float32, x_shape, name='noise_image')
-    y = tf.placeholder(tf.float32, x_shape, name='clean_image')
-    nlf0 = tf.placeholder(tf.float32, [None], name='nlf0')
-    nlf1 = tf.placeholder(tf.float32, [None], name='nlf1')
-    iso = tf.placeholder(tf.float32, [None], name='iso')
-    cam = tf.placeholder(tf.float32, [None], name='cam')
-    lr = tf.placeholder(tf.float32, None, name='learning_rate')
+    with tf.device('/device:GPU:0'):
+        is_training = tf.placeholder(tf.bool, name='is_training')
+        x = tf.placeholder(tf.float32, x_shape, name='noise_image')
+        y = tf.placeholder(tf.float32, x_shape, name='clean_image')
+        nlf0 = tf.placeholder(tf.float32, [None], name='nlf0')
+        nlf1 = tf.placeholder(tf.float32, [None], name='nlf1')
+        iso = tf.placeholder(tf.float32, [None], name='iso')
+        cam = tf.placeholder(tf.float32, [None], name='cam')
+        lr = tf.placeholder(tf.float32, None, name='learning_rate')
 
     # initialization of signal, gain, and camera parameters
     if hps.sidd_cond == 'mix':
         init_params(hps)
 
     # NoiseFlow model
-    nf = NoiseFlow(input_shape[1:], is_training, hps)
-    loss_val, sd_z = nf.loss(x, y, nlf0=nlf0, nlf1=nlf1, iso=iso, cam=cam)
+    with tf.device('/device:GPU:0'):
+        nf = NoiseFlow(input_shape[1:], is_training, hps)
+        loss_val, sd_z = nf.loss(x, y, nlf0=nlf0, nlf1=nlf1, iso=iso, cam=cam)
 
     # save variable names and number of parameters
     vs = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
@@ -365,6 +367,7 @@ def main(hps):
     start_epoch = 1
     logging.trace('continue_training = ' + str(hps.continue_training))
     if hps.continue_training:
+        import ipdb;ipdb.set_trace()
         sess.run(tf.global_variables_initializer())
         last_epoch = restore_last_model(ckpt_dir, sess, saver)
         start_epoch = 1 + last_epoch
@@ -376,7 +379,8 @@ def main(hps):
             train_op = get_optimizer(hps, lr, loss_val)
     else:
         logging.trace('preparing optimizer')
-        train_op = get_optimizer(hps, lr, loss_val)
+        with tf.device('/device:GPU:0'):
+            train_op = get_optimizer(hps, lr, loss_val)
         logging.trace('initializing variables')
         sess.run(tf.global_variables_initializer())
 
