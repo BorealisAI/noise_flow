@@ -23,7 +23,7 @@ from sidd.Initialization import initialize_data_stats_queues_baselines_histogram
 from sidd.data_loader import check_download_sidd
 from sidd.sidd_utils import sidd_filenames_que_inst, restore_last_model, \
     divide_parts, calc_train_test_stats, print_train_test_stats, sample_sidd_tf, \
-    calc_kldiv_mb, kl_div_3_data
+    calc_kldiv_mb, kl_div_3_data, restore_model
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -363,26 +363,22 @@ def main(hps):
     test_results = []
     sample_results = []
 
+    logging.trace('preparing optimizer')
+    with tf.device('/device:GPU:0'):
+        train_op = get_optimizer(hps, lr, loss_val)
+    logging.trace('initializing variables')
+    sess.run(tf.global_variables_initializer())
+
     # continue training?
     start_epoch = 1
     logging.trace('continue_training = ' + str(hps.continue_training))
     if hps.continue_training:
-        import ipdb;ipdb.set_trace()
-        sess.run(tf.global_variables_initializer())
-        last_epoch = restore_last_model(ckpt_dir, sess, saver)
+        if hps.restore_epoch:
+            last_epoch = hps.restore_epoch
+            restore_model(ckpt_dir, sess, saver, last_epoch)
+        else:
+            last_epoch = restore_last_model(ckpt_dir, sess, saver)
         start_epoch = 1 + last_epoch
-        # noinspection PyBroadException
-        try:
-            train_op = tf.get_collection('train_op')  # [0]
-        except:
-            logging.trace('could not restore optimizer state, preparing a new optimizer')
-            train_op = get_optimizer(hps, lr, loss_val)
-    else:
-        logging.trace('preparing optimizer')
-        with tf.device('/device:GPU:0'):
-            train_op = get_optimizer(hps, lr, loss_val)
-        logging.trace('initializing variables')
-        sess.run(tf.global_variables_initializer())
 
     _lr = hps.lr
     _nlf0 = None
@@ -391,6 +387,7 @@ def main(hps):
     kldiv3 = None
 
     # Epochs
+    logging.trace('totoal number 0f variables = %d' % len(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)))
     logging.trace('Starting training/testing/samplings.')
     logging.trace('Logging to ' + logdir)
 

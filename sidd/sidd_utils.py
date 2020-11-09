@@ -1209,6 +1209,18 @@ def restore_last_model(ckpt_dir, sess, saver):
             print('failed to load last model, starting from epoch 1')
     return last_epoch
 
+def restore_model(ckpt_dir, sess, saver, epoch):
+    ckpt = tf.train.get_checkpoint_state(ckpt_dir)
+    if ckpt:
+        try:
+            path_list = ckpt.model_checkpoint_path.split('/')
+            path_list[-1] = 'model.ckpt-' + str(epoch)
+            model_checkpoint_path = '/'.join(path_list)
+            print('loading ' + model_checkpoint_path)
+            saver.restore(sess, model_checkpoint_path)
+        except:
+            print('failed to load last model, starting from epoch 1')
+
 
 def sample_sidd_tf(sess, flow_model, is_training, temp, y, nlf0, nlf1, iso, cam, is_cond):
     if is_cond:

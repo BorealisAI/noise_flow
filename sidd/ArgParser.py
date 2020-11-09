@@ -129,6 +129,8 @@ def arg_parser():
                         help="To only visualize sampled noisy images.")
     parser.add_argument("--do_sample", action='store_true',
                         help="To sample noisy images from the test set.")
+    parser.add_argument("--restore_epoch", type=int,
+                        help="Epoch checkpoint to restore for training")
     parser.add_argument("--sample_epoch_start", type=int,
                         help="Starting epoch checkpoint to use for sampling")
     parser.add_argument("--sample_epoch_end", type=int,
