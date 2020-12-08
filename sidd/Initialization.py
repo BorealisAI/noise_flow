@@ -14,8 +14,7 @@ from sidd.PatchStatsCalculator import PatchStatsCalculator
 from sidd.sidd_utils import sidd_filenames_que_inst
 
 
-def initialize_data_stats_queues_baselines_histograms(hps, logdir):
-
+def initialize_data_stats_queues_baselines_histograms(hps, logdir, tr_batch_sampler=None, ts_batch_sampler=None):
     # use 4 or 8 thread for faster loading
     n_thr_im = 8
     n_thr_pt = 1  # use 1 to prevent shuffling
@@ -57,10 +56,11 @@ def initialize_data_stats_queues_baselines_histograms(hps, logdir):
         nll_gauss, bpd_gauss = pat_stats_calculator.load_gauss_baseline()
         nll_sdn, bpd_sdn = pat_stats_calculator.load_sdn_baseline()
 
-    tr_batch_sampler = MiniBatchSampler(tr_pat_que, minibatch_size=hps.n_batch_train, max_queue_size=mb_qsz_tr,
-                                        n_threads=n_thr_mb, pat_stats=pat_stats)
-    ts_batch_sampler = MiniBatchSampler(ts_pat_que, minibatch_size=hps.n_batch_test, max_queue_size=mb_qsz_ts,
-                                        n_threads=n_thr_mb, pat_stats=pat_stats)
+    if tr_batch_sampler is None:
+        tr_batch_sampler = MiniBatchSampler(tr_pat_que, minibatch_size=hps.n_batch_train, max_queue_size=mb_qsz_tr,
+                                            n_threads=n_thr_mb, pat_stats=pat_stats)
+        ts_batch_sampler = MiniBatchSampler(ts_pat_que, minibatch_size=hps.n_batch_test, max_queue_size=mb_qsz_ts,
+                                            n_threads=n_thr_mb, pat_stats=pat_stats)
     tr_batch_que = tr_batch_sampler.get_queue()
     ts_batch_que = ts_batch_sampler.get_queue()
 
@@ -73,7 +73,7 @@ def initialize_data_stats_queues_baselines_histograms(hps, logdir):
         logging.trace('initialize_data_queues_and_baselines: done')
 
     if hps.calc_pat_stats_and_baselines_only:
-        return pat_stats, nll_gauss, bpd_gauss, nll_sdn, bpd_sdn
+        return pat_stats, nll_gauss, bpd_gauss, nll_sdn, bpd_sdn, tr_batch_sampler, ts_batch_sampler
     else:
         return tr_im_que, ts_im_que, tr_pat_que, ts_pat_que, tr_batch_que, ts_batch_que
 
