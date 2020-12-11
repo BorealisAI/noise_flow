@@ -5,6 +5,7 @@
 # LICENSE file in the root directory of this source tree.
 #
 
+import sys
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
@@ -422,6 +423,7 @@ class NoiseFlow(object):
                         print(e)
                         z = bijector._inverse(z)
                         log_abs_det_J_inv = bijector._inverse_log_det_jacobian(z)
+                tf.summary.scalar(bijector.name, tf.reduce_mean(log_abs_det_J_inv))
                 objective += log_abs_det_J_inv
             if i < self.n_levels - 1:
                 z, objective = split2d("pool{}".format(i), z, objective)
@@ -471,7 +473,9 @@ class NoiseFlow(object):
             # base measure
             logp, _ = self.prior("prior", x)
 
-            objective += logp(z)
+            log_z = logp(z)
+            objective += log_z
+            tf.summary.scalar("log_z", tf.reduce_mean(log_z))
             nobj = - objective
             # std. dev. of z
             mu_z, var_z = tf.nn.moments(z, [1, 2, 3])

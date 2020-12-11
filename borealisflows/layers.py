@@ -360,6 +360,11 @@ class AffineCoupling(tfb.Bijector):
         # tf.summary.histogram('uncond/shift', shift)
         # tf.summary.histogram('uncond/logscale', log_scale)
         log_scale = self.scale * tf.tanh(log_scale)
+
+        tf.summary.scalar(self.name + '_log_scale_mean', tf.reduce_mean(log_scale))
+        tf.summary.scalar(self.name + '_log_scale_min', tf.reduce_min(log_scale))
+        tf.summary.scalar(self.name + '_log_scale_max', tf.reduce_max(log_scale))
+
         x1 = y1
         if log_scale is not None:
             x1 *= tf.exp(log_scale)

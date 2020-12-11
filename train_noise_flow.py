@@ -28,8 +28,8 @@ from sidd.sidd_utils import sidd_filenames_que_inst, restore_last_model, \
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
-def train_multithread(sess, tr_batch_que,
-                      loss, sd_z, train_op,
+def train_multithread(sess, num_epoch, tr_batch_que,
+                      loss, sd_z, summ, writer, train_op,
                       x, y, nlf0, nlf1, iso, cam, lr, is_training,
                       _lr, n_processed_que, train_epoch_loss_que, sd_z_que,
                       train_its, nthr=8, requeue=False):
@@ -37,8 +37,8 @@ def train_multithread(sess, tr_batch_que,
     threads = []
     for thr_id in range(nthr):
         threads.append(Thread(target=train_thread,
-                              args=(thr_id, divs[thr_id], sess, tr_batch_que,
-                                    loss, sd_z, train_op,
+                              args=(num_epoch, thr_id, divs[thr_id], sess, tr_batch_que,
+                                    loss, sd_z, summ, writer, train_op,
                                     x, y, nlf0, nlf1, iso, cam, lr, is_training,
                                     _lr, n_processed_que, train_epoch_loss_que, sd_z_que, requeue)
                               )
@@ -48,8 +48,8 @@ def train_multithread(sess, tr_batch_que,
         threads[thr_id].join()
 
 
-def train_thread(thr_id, niter, sess, tr_batch_que,
-                 loss, sd_z, train_op,
+def train_thread(num_epoch, thr_id, niter, sess, tr_batch_que,
+                 loss, sd_z, summ, writer, train_op,
                  x, y, nlf0, nlf1, iso, cam, lr, is_training,
                  _lr, n_processed_que, train_epoch_loss_que, sd_z_que, requeue=False):
     for k in range(niter):
@@ -69,11 +69,12 @@ def train_thread(thr_id, niter, sess, tr_batch_que,
                 nlf1: _nlf1
             })
         if hps.sidd_cond == 'condSDN':
-            train_loss, sd_z_val = sess.run(
-                [loss, sd_z], feed_dict=feed_dict)
+            train_loss, sd_z_val, s = sess.run(
+                [loss, sd_z, summ], feed_dict=feed_dict)
         else:
-            _, train_loss, sd_z_val = sess.run(
-                [train_op, loss, sd_z], feed_dict=feed_dict)
+            _, train_loss, sd_z_val, s = sess.run(
+                [train_op, loss, sd_z, summ], feed_dict=feed_dict)
+        writer.add_summary(s, k  + (niter * (num_epoch - 1)))
         if requeue:
             tr_batch_que.put(tr_mb_dict)
         sd_z_que.put(sd_z_val)
@@ -244,7 +245,6 @@ def main(hps):
 
     logging.trace('SIDD path = %s' % hps.sidd_path)
     logging.trace('Num GPUs Available: %s' % len(tf.config.experimental.list_physical_devices('GPU')))
-
     # prepare data file names
     tr_fns, hps.n_tr_inst = sidd_filenames_que_inst(hps.sidd_path, 'train', hps.start_tr_im_idx, hps.end_tr_im_idx,
                                                     hps.camera, hps.iso)
@@ -294,24 +294,25 @@ def main(hps):
 
     # Build noise flow graph
     logging.trace('Building NoiseFlow...')
-    with tf.device('/device:GPU:0'):
-        is_training = tf.placeholder(tf.bool, name='is_training')
-        x = tf.placeholder(tf.float32, x_shape, name='noise_image')
-        y = tf.placeholder(tf.float32, x_shape, name='clean_image')
-        nlf0 = tf.placeholder(tf.float32, [None], name='nlf0')
-        nlf1 = tf.placeholder(tf.float32, [None], name='nlf1')
-        iso = tf.placeholder(tf.float32, [None], name='iso')
-        cam = tf.placeholder(tf.float32, [None], name='cam')
-        lr = tf.placeholder(tf.float32, None, name='learning_rate')
+    is_training = tf.placeholder(tf.bool, name='is_training')
+    x = tf.placeholder(tf.float32, x_shape, name='noise_image')
+    y = tf.placeholder(tf.float32, x_shape, name='clean_image')
+    nlf0 = tf.placeholder(tf.float32, [None], name='nlf0')
+    nlf1 = tf.placeholder(tf.float32, [None], name='nlf1')
+    iso = tf.placeholder(tf.float32, [None], name='iso')
+    cam = tf.placeholder(tf.float32, [None], name='cam')
+    lr = tf.placeholder(tf.float32, None, name='learning_rate')
 
     # initialization of signal, gain, and camera parameters
     if hps.sidd_cond == 'mix':
         init_params(hps)
 
     # NoiseFlow model
-    with tf.device('/device:GPU:0'):
-        nf = NoiseFlow(input_shape[1:], is_training, hps)
-        loss_val, sd_z = nf.loss(x, y, nlf0=nlf0, nlf1=nlf1, iso=iso, cam=cam)
+    nf = NoiseFlow(input_shape[1:], is_training, hps)
+    loss_val, sd_z = nf.loss(x, y, nlf0=nlf0, nlf1=nlf1, iso=iso, cam=cam)
+
+    logging.trace('preparing optimizer')
+    train_op = get_optimizer(hps, lr, loss_val)
 
     # save variable names and number of parameters
     vs = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
@@ -363,9 +364,6 @@ def main(hps):
     test_results = []
     sample_results = []
 
-    logging.trace('preparing optimizer')
-    with tf.device('/device:GPU:0'):
-        train_op = get_optimizer(hps, lr, loss_val)
     logging.trace('initializing variables')
     sess.run(tf.global_variables_initializer())
 
@@ -390,6 +388,10 @@ def main(hps):
     logging.trace('totoal number 0f variables = %d' % len(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)))
     logging.trace('Starting training/testing/samplings.')
     logging.trace('Logging to ' + logdir)
+
+    summ = tf.summary.merge_all()
+    writer = tf.summary.FileWriter("./test_log_dir/test_log2")
+    writer.add_graph(sess.graph)
 
     for epoch in range(start_epoch, hps.epochs + 1):
 
@@ -497,7 +499,7 @@ def main(hps):
             n_processed_que = queue.Queue()
             sd_z_tr = 0
 
-            train_multithread(sess, tr_batch_que, loss_val, sd_z, train_op, x, y, nlf0, nlf1, iso, cam,
+            train_multithread(sess, epoch, tr_batch_que, loss_val, sd_z, summ, writer, train_op, x, y, nlf0, nlf1, iso, cam,
                               lr, is_training, _lr, n_processed_que, train_epoch_loss_que, sd_z_que_tr,
                               train_its, nthr=hps.n_train_threads, requeue=not hps.mb_requeue)
 
@@ -513,7 +515,7 @@ def main(hps):
 
             mean_train_loss = np.mean(train_epoch_loss)
             train_results.append(mean_train_loss)
-
+            # print("epoch: %s, losses:%s" % (epoch, np.isnan(np.sum(train_epoch_loss))))
             t_train = time.time() - t
             train_time += t_train
 

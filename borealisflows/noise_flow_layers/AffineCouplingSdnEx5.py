@@ -120,6 +120,10 @@ class AffineCouplingSdnEx5(tfb.Bijector):
 
         # tf.summary.histogram('sdn/scale', scale)
 
+        tf.summary.scalar(self.name + '_scale_mean', tf.reduce_mean(scale))
+        tf.summary.scalar(self.name + '_scale_min', tf.reduce_min(scale))
+        tf.summary.scalar(self.name + '_scale_max', tf.reduce_max(scale))
+
         x = y
         if scale is not None:
             x /= scale

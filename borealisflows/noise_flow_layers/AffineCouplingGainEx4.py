@@ -114,6 +114,11 @@ class AffineCouplingGainEx4(tfb.Bijector):
     def _inverse_and_log_det_jacobian(self, y, yy, nlf0=None, nlf1=None, iso=None, cam=None):
         scale = gain_model_params_ex4(iso, self.gain_init)
         scale = scale + (y * 0.0)
+
+        tf.summary.scalar(self.name + '_scale_mean', tf.reduce_mean(scale))
+        tf.summary.scalar(self.name + '_scale_min', tf.reduce_min(scale))
+        tf.summary.scalar(self.name + '_scale_max', tf.reduce_max(scale))
+
         # tf.summary.histogram('gain/scale', scale)
         x = y
         if scale is not None:
