@@ -485,6 +485,8 @@ class NoiseFlow(object):
 
     def loss(self, x, y, nlf0=None, nlf1=None, iso=None, cam=None, reuse=False):
         nll, sd_z = self._loss(x=x, y=y, nlf0=nlf0, nlf1=nlf1, iso=iso, cam=cam, reuse=reuse)  # returns NLL
+
+        tf.summary.scalar("NLL", tf.reduce_mean(nll))
         return tf.reduce_mean(nll), sd_z
 
     def prior(self, name, x):
