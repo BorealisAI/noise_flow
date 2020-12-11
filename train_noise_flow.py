@@ -390,7 +390,7 @@ def main(hps):
     logging.trace('Logging to ' + logdir)
 
     summ = tf.summary.merge_all()
-    writer = tf.summary.FileWriter("./test_log_dir/SRGB")
+    writer = tf.summary.FileWriter("./tensorboard_data/SRGB")
     writer.add_graph(sess.graph)
 
     for epoch in range(start_epoch, hps.epochs + 1):
