@@ -234,7 +234,7 @@ def load_one_tuple_srgb_images(filepath_tuple):
     #     input_image = np.expand_dims(pack_raw(raw), axis=0)
     #     input_image = np.nan_to_num(input_image)
     #     input_image = np.clip(input_image, 0.0, 1.0)
-    input_image = cv2.imread(in_path) 
+    input_image = cv2.imread(in_path).astype(np.int8)
 
     # with h5py.File(gt_path, 'r') as f:
     #     gt_raw = f[list(f.keys())[0]]  # use the first and only key
@@ -242,7 +242,7 @@ def load_one_tuple_srgb_images(filepath_tuple):
     #     gt_image = np.expand_dims(pack_raw(gt_raw), axis=0)
     #     gt_image = np.nan_to_num(gt_image)
     #     gt_image = np.clip(gt_image, 0.0, 1.0)
-    gt_image = cv2.imread(gt_path)
+    gt_image = cv2.imread(gt_path).astype(np.int8)
 
     fparts = in_path.split('/')
     sdir = fparts[-3]

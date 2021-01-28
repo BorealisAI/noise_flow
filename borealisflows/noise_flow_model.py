@@ -455,6 +455,9 @@ class NoiseFlow(object):
             _, sample = self.prior("prior", y)
             z = sample(eps_std)
             x = self.forward(z, eps_std, yy, nlf0, nlf1, iso, cam)
+            batch_average = tf.reduce_mean(x, axis=0)
+            tf.summary.histogram('sample_noise', batch_average)
+            tf.summary.scalar('sample_noise_std', tf.math.reduce_std(batch_average))
         return x
 
     def _loss(self, x, y, nlf0=None, nlf1=None, iso=None, cam=None, reuse=False):
@@ -484,6 +487,10 @@ class NoiseFlow(object):
         return nobj, sd_z
 
     def loss(self, x, y, nlf0=None, nlf1=None, iso=None, cam=None, reuse=False):
+        batch_average = tf.reduce_mean(x, axis=0)
+        tf.summary.histogram('real_noise', batch_average)
+        tf.summary.scalar('real_noise_std', tf.math.reduce_std(batch_average))
+
         nll, sd_z = self._loss(x=x, y=y, nlf0=nlf0, nlf1=nlf1, iso=iso, cam=cam, reuse=reuse)  # returns NLL
 
         tf.summary.scalar("NLL", tf.reduce_mean(nll))

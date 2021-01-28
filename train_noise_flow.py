@@ -310,6 +310,7 @@ def main(hps):
     # NoiseFlow model
     nf = NoiseFlow(input_shape[1:], is_training, hps)
     loss_val, sd_z = nf.loss(x, y, nlf0=nlf0, nlf1=nlf1, iso=iso, cam=cam)
+    x_sample = nf.sample(y, 1.0, y, nlf0, nlf1, iso, cam)
 
     logging.trace('preparing optimizer')
     train_op = get_optimizer(hps, lr, loss_val)
@@ -390,7 +391,7 @@ def main(hps):
     logging.trace('Logging to ' + logdir)
 
     summ = tf.summary.merge_all()
-    writer = tf.summary.FileWriter("./tensorboard_data/SRGB")
+    writer = tf.summary.FileWriter("./tensorboard_data_5/SRGB_noise_flow_fixed_image_loader_12")
     writer.add_graph(sess.graph)
 
     for epoch in range(start_epoch, hps.epochs + 1):
@@ -438,7 +439,7 @@ def main(hps):
             t_test = time.time() - t
 
         # End testing if & loop
-
+        import ipdb;ipdb.set_trace()
         # Sampling (optional)
         do_sampling = False  # make this true to perform sampling
         if do_sampling and ((epoch < 10 or (epoch < 100 and epoch % 10 == 0) or  # (is_best == 1) or
