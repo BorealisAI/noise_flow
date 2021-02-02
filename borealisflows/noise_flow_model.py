@@ -34,6 +34,7 @@ from borealisflows.layers import AffineCoupling
 from borealisflows.layers import real_nvp_conv_template
 from borealisflows.layers import Conv2d1x1
 from borealisflows.layers import conv2d_zeros
+from borealisflows.layers import LogisticSigmoind
 from borealisflows.utils import int_shape
 from borealisflows.utils import squeeze2d
 from borealisflows.utils import unsqueeze2d
@@ -73,6 +74,10 @@ class NoiseFlow(object):
         arch_lyrs = arch.split('|')  # e.g., unc|sdn|unc|gain|unc
         bijectors = []
         with tf.variable_scope(name):
+            print('|-LogisticSigmoind')
+            bijectors.append(
+                LogisticSigmoind(last_layer=False, forward_min_event_ndims=1))
+
             for i, lyr in enumerate(arch_lyrs):
                 with tf.variable_scope('bijector{}'.format(i)):
                     is_last_layer = False

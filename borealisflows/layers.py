@@ -10,6 +10,7 @@ import warnings
 import numpy as np
 import scipy
 import tensorflow as tf
+import tensorflow_probability as tfp
 
 from borealisflows.matrix_param import *
 from borealisflows.utils import int_shape
@@ -70,6 +71,43 @@ class LeakyReLU(tfb.Bijector):
         log_abs_det_J_inv = self._inverse_log_det_jacobian(y)
         return x, log_abs_det_J_inv
 
+
+class LogisticSigmoind(tfb.Bijector):
+    def __init__(self, validate_args=False, forward_min_event_ndims=0, last_layer=False, name='LogisticSigmoind'):
+        super(LogisticSigmoind, self).__init__(forward_min_event_ndims=forward_min_event_ndims, validate_args=validate_args, name=name)
+        self.sigmoid = tfp.bijectors.Sigmoid(validate_args=False, name='sigmoid')
+        self._last_layer = last_layer
+
+    def _forward(self, x):
+        if self._last_layer:
+            x = tf.reshape(x, (-1, self.i0, self.i1, self.ic))
+
+        y = self.sigmoid.forward(x)
+        return y
+
+    def _inverse(self, y):
+        x = self.sigmoid.inverse(y)
+        if self._last_layer:
+            x = tf.reshape(x, (-1, self.i0 * self.i1 * self.ic))
+        return x
+
+    def _forward_log_det_jacobian(self, x):
+        event_ndims = len(x.shape) - 1
+        return self.sigmoid.forward_log_det_jacobian(x, event_ndims)
+
+    def _inverse_log_det_jacobian(self, y):
+        event_ndims = len(y.shape) - 1
+        return self.sigmoid.inverse_log_det_jacobian(y, event_ndims)
+
+    def _forward_and_log_det_jacobian(self, x):
+        y = self._forward(x)
+        log_abs_det_J = self._forward_log_det_jacobian(x)
+        return y, log_abs_det_J
+
+    def _inverse_and_log_det_jacobian(self, y):
+        x = self._inverse(y)
+        log_abs_det_J_inv = self._inverse_log_det_jacobian(y)
+        return x, log_abs_det_J_inv
 
 class Conv2d1x1(tfb.Bijector):
     def __init__(

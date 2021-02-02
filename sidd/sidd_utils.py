@@ -234,7 +234,7 @@ def load_one_tuple_srgb_images(filepath_tuple):
     #     input_image = np.expand_dims(pack_raw(raw), axis=0)
     #     input_image = np.nan_to_num(input_image)
     #     input_image = np.clip(input_image, 0.0, 1.0)
-    input_image = cv2.imread(in_path).astype(np.int8)
+    input_image = cv2.imread(in_path).astype(int)
 
     # with h5py.File(gt_path, 'r') as f:
     #     gt_raw = f[list(f.keys())[0]]  # use the first and only key
@@ -242,7 +242,7 @@ def load_one_tuple_srgb_images(filepath_tuple):
     #     gt_image = np.expand_dims(pack_raw(gt_raw), axis=0)
     #     gt_image = np.nan_to_num(gt_image)
     #     gt_image = np.clip(gt_image, 0.0, 1.0)
-    gt_image = cv2.imread(gt_path).astype(np.int8)
+    gt_image = cv2.imread(gt_path).astype(int)
 
     fparts = in_path.split('/')
     sdir = fparts[-3]
@@ -256,7 +256,9 @@ def load_one_tuple_srgb_images(filepath_tuple):
     # use noise layer instead of noise image TODO: just to be aware of this crucial step
     input_image = (input_image - gt_image).astype('float64')
     input_image += RNG.rand(*input_image.shape)
+    input_image /= 256.0
     input_image = input_image[np.newaxis, ...]
+    gt_image /= 256.0
     gt_image = gt_image[np.newaxis, ...]
 
     return input_image, gt_image, iso, cam

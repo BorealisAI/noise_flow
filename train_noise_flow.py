@@ -47,7 +47,6 @@ def train_multithread(sess, num_epoch, tr_batch_que,
     for thr_id in range(nthr):
         threads[thr_id].join()
 
-
 def train_thread(num_epoch, thr_id, niter, sess, tr_batch_que,
                  loss, sd_z, summ, writer, train_op,
                  x, y, nlf0, nlf1, iso, cam, lr, is_training,
@@ -75,6 +74,7 @@ def train_thread(num_epoch, thr_id, niter, sess, tr_batch_que,
             _, train_loss, sd_z_val, s = sess.run(
                 [train_op, loss, sd_z, summ], feed_dict=feed_dict)
         writer.add_summary(s, k  + (niter * (num_epoch - 1)))
+
         if requeue:
             tr_batch_que.put(tr_mb_dict)
         sd_z_que.put(sd_z_val)
@@ -391,7 +391,7 @@ def main(hps):
     logging.trace('Logging to ' + logdir)
 
     summ = tf.summary.merge_all()
-    writer = tf.summary.FileWriter("./tensorboard_data_5/SRGB_noise_flow_fixed_image_loader_12")
+    writer = tf.summary.FileWriter("./tensorboard_data_6/SRGB_noise_flow_fixed_image_loader_2")
     writer.add_graph(sess.graph)
 
     for epoch in range(start_epoch, hps.epochs + 1):
@@ -439,7 +439,6 @@ def main(hps):
             t_test = time.time() - t
 
         # End testing if & loop
-        import ipdb;ipdb.set_trace()
         # Sampling (optional)
         do_sampling = False  # make this true to perform sampling
         if do_sampling and ((epoch < 10 or (epoch < 100 and epoch % 10 == 0) or  # (is_best == 1) or
