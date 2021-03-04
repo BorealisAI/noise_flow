@@ -281,6 +281,8 @@ def main(hps):
     input_shape = x_shape
 
     # Build noise flow graph
+    # Note: Only for convention, the real noise distribution, denoted here as `x`, is denoted in the paper as `n`.
+    # Also, the latent distribution, denoted here as `z`, is denoted in the paper as `x_0`.
     logging.trace('Building NoiseFlow...')
     is_training = tf.placeholder(tf.bool, name='is_training')
     x = tf.placeholder(tf.float32, x_shape, name='noise_image')
