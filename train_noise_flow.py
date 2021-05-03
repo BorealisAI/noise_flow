@@ -181,7 +181,7 @@ def sample_thread(thr_id, niter, sess, ts_batch_que,
                                                      iso: _iso, cam: _cam, is_training: False})
 
         # (optional) compute KL divergence between _x and x_sample_val
-        kldiv3 = kl_div_3_data(_x, x_sample_val)  # slow
+        # kldiv3 = kl_div_3_data(_x, x_sample_val)  # slow
 
         # compute NLL (inverse)
         sample_loss, sd_z_val = sess.run([loss, sd_z], feed_dict={x: x_sample_val, y: _y, nlf0: _nlf0, nlf1: _nlf1,
@@ -391,7 +391,7 @@ def main(hps):
     logging.trace('Logging to ' + logdir)
 
     summ = tf.summary.merge_all()
-    writer = tf.summary.FileWriter("./tensorboard_data_6/SRGB_noise_flow_fixed_image_loader_2")
+    writer = tf.summary.FileWriter("./tensorboard_data_5/{}".format(hps.logdir.split('/')[-2]))
     writer.add_graph(sess.graph)
 
     for epoch in range(start_epoch, hps.epochs + 1):
@@ -440,7 +440,7 @@ def main(hps):
 
         # End testing if & loop
         # Sampling (optional)
-        do_sampling = False  # make this true to perform sampling
+        do_sampling = True  # make this true to perform sampling
         if do_sampling and ((epoch < 10 or (epoch < 100 and epoch % 10 == 0) or  # (is_best == 1) or
                              epoch % hps.epochs_full_valid * 2 == 0.)):
             for temp in [1.0]:  # using only default temperature
@@ -455,7 +455,7 @@ def main(hps):
                 sd_z_sam = 0.0
                 kldiv1 = np.ndarray([4])
                 kldiv1[:] = 0.0
-                kldiv3 = np.zeros(4)
+                kldiv3 = np.zeros(3)
 
                 is_cond = hps.sidd_cond != 'uncond'
 
@@ -484,7 +484,7 @@ def main(hps):
                 # log
                 log_dict = {'epoch': epoch, 'NLL': sample_results[-1], 'NLL_G': nll_gauss,
                             'NLL_SDN': nll_sdn, 'sdz': sd_z_sam, 'sample_time': t_sample, 'KLD_G': kldiv3[0],
-                            'KLD_NLF': kldiv3[1], 'KLD_NF': kldiv3[2], 'KLD_R': kldiv3[3]}
+                            'KLD_NLF': 0, 'KLD_NF': kldiv3[1], 'KLD_R': kldiv3[2]}
                 sample_logger.log(log_dict)
 
         # Training loop
@@ -559,5 +559,4 @@ if __name__ == "__main__":
     # This enables a ctr-C without triggering errors
     signal.signal(signal.SIGINT, lambda x, y: sys.exit(0))
     hps = arg_parser()
-
     main(hps)

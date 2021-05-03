@@ -319,7 +319,7 @@ class AffineCoupling(tfb.Bijector):
         shift, log_scale = self._shift_and_log_scale_fn(x0)
         tf.summary.histogram('uncond. shift (forward)', shift)
         tf.summary.histogram('uncond. log_scale (forward)', log_scale)
-        log_scale = self.scale * tf.tanh(log_scale)
+        log_scale = tf.tanh(self.scale * tf.tanh(log_scale))
         y1 = x1
         if shift is not None:
             y1 -= shift
@@ -335,7 +335,7 @@ class AffineCoupling(tfb.Bijector):
         shift, log_scale = self._shift_and_log_scale_fn(y0)
         # tf.summary.histogram('uncond/shift', shift)
         # tf.summary.histogram('uncond/logscale', log_scale)
-        log_scale = self.scale * tf.tanh(log_scale)
+        log_scale = tf.tanh(self.scale * tf.tanh(log_scale))
         x1 = y1
         if log_scale is not None:
             x1 *= tf.exp(log_scale)
@@ -351,7 +351,7 @@ class AffineCoupling(tfb.Bijector):
             x = tf.reshape(x, (-1, self.i0, self.i1, self.ic))
         x0 = x[:, :, :, :self.ic // 2]
         _, log_scale = self._shift_and_log_scale_fn(x0)
-        log_scale = self.scale * tf.tanh(log_scale)
+        log_scale = tf.tanh(self.scale * tf.tanh(log_scale))
         # tf.summary.histogram('uncond/logscale', log_scale)
         if log_scale is None:
             return tf.constant(0., dtype=x.dtype, name="fldj")
@@ -361,7 +361,7 @@ class AffineCoupling(tfb.Bijector):
     def _inverse_log_det_jacobian(self, z):
         z0 = z[:, :, :, :self.ic // 2]
         _, log_scale = self._shift_and_log_scale_fn(z0)
-        log_scale = self.scale * tf.tanh(log_scale)
+        log_scale = tf.tanh(self.scale * tf.tanh(log_scale))
         # tf.summary.histogram('uncond/logscale', log_scale)
         if log_scale is None:
             return tf.constant(0., dtype=z.dtype, name="ildj")
@@ -377,7 +377,7 @@ class AffineCoupling(tfb.Bijector):
         shift, log_scale = self._shift_and_log_scale_fn(x0)
         # tf.summary.histogram('uncond/shift', shift)
         # tf.summary.histogram('uncond/logscale', log_scale)
-        log_scale = self.scale * tf.tanh(log_scale)
+        log_scale = tf.tanh(self.scale * tf.tanh(log_scale))
         y1 = x1
         if shift is not None:
             y1 -= shift
@@ -402,6 +402,11 @@ class AffineCoupling(tfb.Bijector):
         tf.summary.scalar(self.name + '_log_scale_mean', tf.reduce_mean(log_scale))
         tf.summary.scalar(self.name + '_log_scale_min', tf.reduce_min(log_scale))
         tf.summary.scalar(self.name + '_log_scale_max', tf.reduce_max(log_scale))
+
+
+        tf.summary.scalar(self.name + '_rescaling_scale_mean', tf.reduce_mean(self.scale))
+        tf.summary.scalar(self.name + '_rescaling_scale_min', tf.reduce_min(self.scale))
+        tf.summary.scalar(self.name + '_rescaling_scale_max', tf.reduce_max(self.scale))
 
         x1 = y1
         if log_scale is not None:
@@ -531,12 +536,17 @@ def real_nvp_conv_template(
                         x, False, name='bn_nvp_conv_2'))
             x = activation(x)
 
-            x = conv2d_zeros('l_last', x, num_output)
+            # x = conv2d_zeros('l_last', x, num_output)
+
+            # x = tf.layers.Conv2D(4, 3, activation='relu', input_shape=x.shape[1:], padding='SAME')(x)
+            # x = tf.layers.Conv2D(2, 3, activation='relu', input_shape=x.shape[1:], padding='SAME')(x)
+            # x = tf.layers.Conv2D(2, 3, activation='relu', input_shape=x.shape[1:], padding='SAME')(x)
             if shift_only:
                 return x, None
             shift, log_scale = tf.split(x, 2, axis=-1)
             # shift = x[:, :, :, 0::2]
             # log_scale = x[:, :, :, 1::2]
+
             return shift, log_scale
         return tf.make_template(template_name, _fn)
 

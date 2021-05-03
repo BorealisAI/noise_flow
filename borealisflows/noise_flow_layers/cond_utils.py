@@ -204,39 +204,46 @@ def sdn_model_params_ex4(yy, iso, gain_init):
 
 def sdn_model_params_ex5(yy, iso, gain_init, cam, param_inits):
     # c = 1e-1
-    with tf.variable_scope('sdn_gain', reuse=tf.AUTO_REUSE):
-        # params initializers
-        (c_i, beta1_i, beta2_i, gain_params_i, cam_params_i) = param_inits
+    # with tf.variable_scope('sdn_gain', reuse=tf.AUTO_REUSE):
+    yy = tf.layers.Conv2D(6, 3, activation='relu', input_shape=yy.shape[1:], padding='SAME')(yy)
+    yy = tf.layers.Conv2D(3, 3, activation='relu', input_shape=yy.shape[1:], padding='SAME')(yy)
+    log_scale = tf.layers.Conv2D(3, 3, activation='relu', input_shape=yy.shape[1:], padding='SAME')(yy)
+    return log_scale
+    #     # params initializers
+    #     (c_i, beta1_i, beta2_i, gain_params_i, cam_params_i) = param_inits
 
-        # cam params
-        n_param_per_cam = 3  # for scaling beta1, beta2, and gain
-        cam_vals = tf.constant([0, 1, 2, 3, 4], dtype=tf.float32)  # 'IP', 'GP', 'S6', 'N6', 'G4'
-        cam_params = tf.get_variable('cam_params', [n_param_per_cam, cam_vals.shape[0]], tf.float32,
-                                     initializer=tf.constant_initializer(cam_params_i))  # 1.0
-        cam_idx = tf.where(tf.equal(cam_vals, cam))
-        cam_idx = cam_idx[0]
-        cam_one_hot = tf.one_hot(cam_idx, cam_vals.shape[0])
-        one_cam_params = tf.reduce_sum(cam_one_hot * cam_params, axis=1)
-        one_cam_params = tf.exp(c_i * one_cam_params)
+    #     # cam params
+    #     n_param_per_cam = 3  # for scaling beta1, beta2, and gain
+    #     cam_vals = tf.constant([0, 1, 2, 3, 4], dtype=tf.float32)  # 'IP', 'GP', 'S6', 'N6', 'G4'
+    #     cam_params = tf.get_variable('cam_params', [n_param_per_cam, cam_vals.shape[0]], tf.float32,
+    #                                  initializer=tf.constant_initializer(cam_params_i))  # 1.0
+    #     cam_idx = tf.where(tf.equal(cam_vals, cam))
+    #     cam_idx = cam_idx[0]
+    #     cam_one_hot = tf.one_hot(cam_idx, cam_vals.shape[0])
+    #     one_cam_params = tf.reduce_sum(cam_one_hot * cam_params, axis=1)
+    #     one_cam_params = tf.exp(c_i * one_cam_params)
 
-        # gain params
-        gain = tf.get_variable('gain_val', [1], tf.float32, initializer=tf.constant_initializer(1.0))
-        iso_vals = tf.constant([100, 400, 800, 1600, 3200], dtype=tf.float32)
-        gain_params = tf.get_variable('gain_params', [iso_vals.shape[0]], tf.float32,
-                                      initializer=tf.constant_initializer(gain_params_i))  # -5.0 / c_i
-        iso_idx = tf.where(tf.equal(iso_vals, iso))
-        gain_one_hot = tf.one_hot(iso_idx, iso_vals.shape[0])
-        g = tf.reduce_sum(gain_one_hot * gain_params)
-        gain = tf.exp(c_i * g * one_cam_params[2]) * iso
+    #     # gain params
+    #     gain = tf.get_variable('gain_val', [1], tf.float32, initializer=tf.constant_initializer(1.0))
+    #     iso_vals = tf.constant([100, 400, 800, 1600, 3200], dtype=tf.float32)
+    #     gain_params = tf.get_variable('gain_params', [iso_vals.shape[0]], tf.float32,
+    #                                   initializer=tf.constant_initializer(gain_params_i))  # -5.0 / c_i
+    #     iso_idx = tf.where(tf.equal(iso_vals, iso))
+    #     gain_one_hot = tf.one_hot(iso_idx, iso_vals.shape[0])
+    #     g = tf.reduce_sum(gain_one_hot * gain_params)
+    #     gain = tf.exp(c_i * g * one_cam_params[2]) * iso
 
-        beta1 = tf.get_variable("beta1", [1], tf.float32,
-                                initializer=tf.constant_initializer(beta1_i))  # -5.0 / c_i
-        beta2 = tf.get_variable("beta2", [1], tf.float32,
-                                initializer=tf.constant_initializer(beta2_i))  # 0.0
-        beta1 = tf.exp(c_i * beta1 * one_cam_params[0])
-        beta2 = tf.exp(c_i * beta2 * one_cam_params[1])
-        scale = tf.sqrt(beta1 * yy / gain + beta2)
-    return scale
+    #     beta1 = tf.get_variable("beta1", [1], tf.float32,
+    #                             initializer=tf.constant_initializer(beta1_i))  # -5.0 / c_i
+    #     beta2 = tf.get_variable("beta2", [1], tf.float32,
+    #                             initializer=tf.constant_initializer(beta2_i))  # 0.0
+    #     beta1 = tf.exp(c_i * beta1 * one_cam_params[0])
+    #     beta2 = tf.exp(c_i * beta2 * one_cam_params[1])
+    #     # test = beta1 * yy / gain + beta2
+    #     # test = tf.where(test < 0.0001, tf.zeros((138, 32, 32, 3))+ 0.0001, test)
+    #     # scale = tf.sqrt(test)
+    #     scale = tf.sqrt(beta1 * yy / gain + beta2)
+    # return scale
 
 
 def sdn_model_params_ex6(yy, iso, gain_init, cam, param_inits):

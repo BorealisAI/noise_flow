@@ -74,9 +74,9 @@ class NoiseFlow(object):
         arch_lyrs = arch.split('|')  # e.g., unc|sdn|unc|gain|unc
         bijectors = []
         with tf.variable_scope(name):
-            print('|-LogisticSigmoind')
-            bijectors.append(
-                LogisticSigmoind(last_layer=False, forward_min_event_ndims=1))
+            # print('|-LogisticSigmoind')
+            # bijectors.append(
+            #     LogisticSigmoind(last_layer=False, forward_min_event_ndims=1))
 
             for i, lyr in enumerate(arch_lyrs):
                 with tf.variable_scope('bijector{}'.format(i)):
@@ -484,6 +484,7 @@ class NoiseFlow(object):
             log_z = logp(z)
             objective += log_z
             tf.summary.scalar("log_z", tf.reduce_mean(log_z))
+            tf.summary.scalar("z", tf.reduce_mean(z))
             nobj = - objective
             # std. dev. of z
             mu_z, var_z = tf.nn.moments(z, [1, 2, 3])
@@ -498,7 +499,7 @@ class NoiseFlow(object):
 
         nll, sd_z = self._loss(x=x, y=y, nlf0=nlf0, nlf1=nlf1, iso=iso, cam=cam, reuse=reuse)  # returns NLL
 
-        tf.summary.scalar("NLL", tf.reduce_mean(nll))
+        tf.summary.scalar("NLL per dim", tf.reduce_mean(nll) / tf.cast(tf.math.reduce_prod(self.x_shape), tf.float32))
         return tf.reduce_mean(nll), sd_z
 
     def prior(self, name, x):

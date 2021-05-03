@@ -258,7 +258,7 @@ def load_one_tuple_srgb_images(filepath_tuple):
     input_image += RNG.rand(*input_image.shape)
     input_image /= 256.0
     input_image = input_image[np.newaxis, ...]
-    gt_image /= 256.0
+    gt_image = gt_image.astype(float) / 256.0
     gt_image = gt_image[np.newaxis, ...]
 
     return input_image, gt_image, iso, cam
@@ -1048,7 +1048,7 @@ def calc_kldiv_mb(mb, x_samples, vis_dir, sc_sd):
     if not os.path.exists(subdir):
         os.makedirs(subdir, exist_ok=True)
     step = 5  # 30
-    n_models = 4
+    n_models = 3
     klds_que = queue.Queue()
     klds_avg = np.ndarray([n_models])
     klds_avg[:] = 0.0
@@ -1063,22 +1063,27 @@ def calc_kldiv_mb(mb, x_samples, vis_dir, sc_sd):
 
 
 def kldiv_patch_set(i, mb, x_samples, sc_sd, subdir, klds_que):
-    y = unpack_raw(mb['_y'][i, :, :, :])
-    nlf_sd = np.sqrt(mb['nlf0'] * y + mb['nlf1'])  # Camera NLF
+    # y = unpack_raw(mb['_y'][i, :, :, :])
+    y = mb['_y'][i, :, :, :]
+    # nlf_sd = np.sqrt(mb['nlf0'] * y + mb['nlf1'])  # Camera NLF
     ng = np.random.normal(0, sc_sd, y.shape)  # Gaussian
-    ns = unpack_raw(x_samples[i, :, :, :])  # NF-sampled
-    nl = nlf_sd * np.random.normal(0, 1, y.shape)  # Camera NLF
-    n = unpack_raw(mb['_x'][i, :, :, :])  # Real
+    # ns = unpack_raw(x_samples[i, :, :, :])  # NF-sampled
+    ns = x_samples[i, :, :, :]
+    # nl = nlf_sd * np.random.normal(0, 1, y.shape)  # Camera NLF
+    # n = unpack_raw(mb['_x'][i, :, :, :])  # Real
+    n = mb['_x'][i, :, :, :]
     xs = np.clip(y + ns, 0.0, 1.0)
     xg = np.clip(y + ng, 0.0, 1.0)
-    xl = np.clip(y + nl, 0.0, 1.0)
+    # xl = np.clip(y + nl, 0.0, 1.0)
     x = np.clip(y + n, 0.0, 1.0)
     pid = mb['pid'][i]
-    noise_pats_raw = (ng, nl, ns, n)
+    # noise_pats_raw = (ng, nl, ns, n)
+    noise_pats_raw = (ng, ns, n)
+
 
     # savemat(os.path.join(subdir, 'meta.mat'), {'x': meta})
 
-    save_mat = True
+    save_mat = False
     # save mat files
     if save_mat:
         savemat(os.path.join(subdir, '%s_%04d.mat' % ('y', pid)), {'x': y})
